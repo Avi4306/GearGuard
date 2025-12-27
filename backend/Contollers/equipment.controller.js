@@ -1,4 +1,4 @@
-const prisma = require('../config/prismaclient');
+import { prisma } from '../config/prismaclient.js';
 
 // CREATE Equipment
 const createEquipment = async (req, res) => {
@@ -121,7 +121,7 @@ const getEquipmentStats = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createEquipment,
   getAllEquipment,
   getEquipmentById,

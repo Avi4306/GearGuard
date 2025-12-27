@@ -1,9 +1,5 @@
-// user.controller.js
-// const prisma = require('../config/prismaclient');
-import {prisma} from '../config/prismaclient.js'
-// CREATE User
-const prisma = require('../config/prismaclient');
-const bcrypt = require('bcryptjs');
+import { prisma } from '../config/prismaclient.js';
+import bcrypt from 'bcryptjs';
 
 // CREATE User
 const createUser = async (req, res) => {
@@ -24,37 +20,6 @@ const createUser = async (req, res) => {
     res.status(201).json({ message: 'User created', user });
   } catch (err) {
     console.error(err);
-    res.status(400).json({ error: err.message });
-  }
-};
-
-// UPDATE user by id
-const updateUser = async (req, res) => {
-  const id = Number(req.params.id);
-  const { name, email, role, password } = req.body;
-
-  try {
-    const dataToUpdate = {
-      name,
-      email,
-      role,
-    };
-
-    if (password) {
-      dataToUpdate.password = await bcrypt.hash(password, 10);
-    }
-
-    const user = await prisma.user.update({
-      where: { id },
-      data: dataToUpdate,
-    });
-
-    res.json({ message: 'User updated', user });
-  } catch (err) {
-    console.error(err);
-    if (err.code === 'P2025') {
-      return res.status(404).json({ message: 'User not found' });
-    }
     res.status(400).json({ error: err.message });
   }
 };
@@ -100,10 +65,41 @@ const getUserById = async (req, res) => {
   }
 };
 
+// UPDATE user by id
+const updateUser = async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, email, role, password } = req.body;
+
+  try {
+    const dataToUpdate = {
+      name,
+      email,
+      role,
+    };
+
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    res.json({ message: 'User updated', user });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(400).json({ error: err.message });
+  }
+};
+
 // DELETE user (admin only)
 const deleteUser = async (req, res) => {
   const id = Number(req.params.id);
-  const { requesterId } = req.body; // jis user ne request bheji (current logged-in user)
+  const { requesterId } = req.body;
 
   try {
     // 1. Check requester exists and is admin
@@ -139,5 +135,5 @@ export {
   getAllUsers,
   getUserById,
   updateUser,
-  deleteUser
+  deleteUser,
 };

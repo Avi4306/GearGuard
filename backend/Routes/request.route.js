@@ -1,6 +1,5 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   createRequest,
   getAllRequests,
   getRequestById,
@@ -8,7 +7,9 @@ const {
   updateStage,
   assignTechnician,
   deleteRequest,
-} = require('../Contollers/request.controller');
+} from '../Contollers/request.controller.js';
+
+const router = express.Router();
 
 router.post('/requests', createRequest);
 router.get('/requests', getAllRequests);
@@ -18,4 +19,4 @@ router.patch('/requests/:id/stage', updateStage);
 router.patch('/requests/:id/assign', assignTechnician);
 router.delete('/requests/:id', deleteRequest);
 
-module.exports = router;
+export default router;

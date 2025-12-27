@@ -1,4 +1,4 @@
-const prisma = require('../config/prismaclient');
+import { prisma } from '../config/prismaclient.js';
 
 // CREATE Request
 const createRequest = async (req, res) => {
@@ -130,7 +130,7 @@ const deleteRequest = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createRequest,
   getAllRequests,
   getRequestById,

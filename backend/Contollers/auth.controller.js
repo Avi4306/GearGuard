@@ -1,6 +1,6 @@
-const crypto = require('crypto');
-const prisma = require('../config/prismaclient');
-const bcrypt = require('bcryptjs');
+import crypto from 'crypto';
+import { prisma } from '../config/prismaclient.js';
+import bcrypt from 'bcryptjs';
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@gearguard.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
@@ -46,4 +46,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { login };
+export { login };

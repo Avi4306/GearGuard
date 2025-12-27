@@ -5,15 +5,14 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-} from '../Contollers/user.controller.js'; // Note: You may need the .js extension depending on your config
+} from '../Contollers/user.controller.js';
 
-const Userrouter = express.Router();
+const userRouter = express.Router();
 
-// Routes
-Userrouter.post('/add-users', createUser);
-Userrouter.get('/users', getAllUsers);
-Userrouter.get('/users/:id', getUserById);
-Userrouter.put('/users/:id', updateUser);
-Userrouter.delete('/users/:id', deleteUser);
+userRouter.post('/add-users', createUser);
+userRouter.get('/users', getAllUsers);
+userRouter.get('/users/:id', getUserById);
+userRouter.put('/users/:id', updateUser);
+userRouter.delete('/users/:id', deleteUser);
 
-export default Userrouter;
+export default userRouter;

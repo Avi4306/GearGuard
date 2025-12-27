@@ -1,18 +1,16 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import authRouter from './routes/auth.route.js';
+import userRouter from './routes/user.route.js';
+import equipmentRouter from './routes/equipment.route.js';
+import requestRouter from './routes/request.route.js';
+import teamRouter from './routes/team.route.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Import routes
-const AuthRouter = require('./routes/auth.route');
-const UserRouter = require('./routes/user.route');
-const EquipmentRouter = require('./routes/equipment.route');
-const RequestRouter = require('./routes/request.route');
-const TeamRouter = require('./routes/team.route');
 
 // Middleware
 app.use(cors());
@@ -23,11 +21,11 @@ app.get('/', (req, res) => {
   res.send('GearGuard API is running');
 });
 
-app.use('/api/auth', AuthRouter);
-app.use('/api', UserRouter);
-app.use('/api', EquipmentRouter);
-app.use('/api', RequestRouter);
-app.use('/api', TeamRouter);
+app.use('/api/auth', authRouter);
+app.use('/api', userRouter);
+app.use('/api', equipmentRouter);
+app.use('/api', requestRouter);
+app.use('/api', teamRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

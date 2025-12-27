@@ -1,4 +1,4 @@
-const prisma = require('../config/prismaclient');
+import { prisma } from '../config/prismaclient.js';
 
 // CREATE Team
 const createTeam = async (req, res) => {
@@ -129,7 +129,7 @@ const removeMember = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   createTeam,
   getAllTeams,
   getTeamById,
