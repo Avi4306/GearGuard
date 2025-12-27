@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
-import equipmentRouter from './routes/equipment.route.js';
+import equipmentRouter from './routes/equipment.routes.js';
 import requestRouter from './routes/request.route.js';
 import teamRouter from './routes/team.route.js';
 
