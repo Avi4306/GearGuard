@@ -9,6 +9,7 @@ import EquipmentForm from './components/equipment/EquipmentForm';
 import CalendarView from './components/calendar/CalendarView';
 import TeamList from './components/teams/TeamList';
 import Dashboard from './components/dashboard/Dashboard';
+import { useAuth } from './context/AuthContext';
 
 // Mock Data
 const mockData = {
@@ -192,7 +193,7 @@ function App() {
         );
     }
   };
-
+  const { logout } = useAuth();
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -212,6 +213,7 @@ function App() {
           setSidebarOpen={setSidebarOpen}
           navigation={navigation}
           currentPage={currentPage}
+          onLogout={logout}
         />
 
         {/* Page Content */}

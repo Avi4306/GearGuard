@@ -2,12 +2,10 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-
+import bcrypt from 'bcryptjs';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // ssl: true
-
 });
 
 const adapter = new PrismaPg(pool);
@@ -26,11 +24,12 @@ async function main() {
     data: { name: "IT Support" }
   });
 
-  // Users
+  // Users (with hashed passwords)
   const manager = await prisma.user.create({
     data: {
       name: "Manager",
       email: "manager@gearguard.com",
+      password: await bcrypt.hash('managerpass', 10),
       role: "manager"
     }
   });
@@ -39,6 +38,7 @@ async function main() {
     data: {
       name: "Technician",
       email: "tech@gearguard.com",
+      password: await bcrypt.hash('techpass', 10),
       role: "technician"
     }
   });

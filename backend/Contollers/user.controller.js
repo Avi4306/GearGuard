@@ -2,21 +2,59 @@
 const prisma = require('../config/prismaclient');
 
 // CREATE User
+const prisma = require('../config/prismaclient');
+const bcrypt = require('bcryptjs');
+
+// CREATE User
 const createUser = async (req, res) => {
-  const { name, email, role } = req.body;
+  const { name, email, role, password } = req.body;
 
   try {
+    const hashed = password ? await bcrypt.hash(password, 10) : undefined;
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
-        role,          // 'user' | 'technician' | 'manager' | 'admin'
+        role,
+        password: hashed,
       },
     });
 
     res.status(201).json({ message: 'User created', user });
   } catch (err) {
     console.error(err);
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// UPDATE user by id
+const updateUser = async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, email, role, password } = req.body;
+
+  try {
+    const dataToUpdate = {
+      name,
+      email,
+      role,
+    };
+
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+    }
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+
+    res.json({ message: 'User updated', user });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.status(400).json({ error: err.message });
   }
 };
@@ -59,31 +97,6 @@ const getUserById = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
-  }
-};
-
-// UPDATE user by id
-const updateUser = async (req, res) => {
-  const id = Number(req.params.id);
-  const { name, email, role } = req.body;
-
-  try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        name,
-        email,
-        role,   // optional, can be undefined
-      },
-    });
-
-    res.json({ message: 'User updated', user });
-  } catch (err) {
-    console.error(err);
-    if (err.code === 'P2025') {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.status(400).json({ error: err.message });
   }
 };
 
