@@ -1,6 +1,18 @@
-// config/prismaclient.js
-const { PrismaClient } = require('@prisma/client');  // ✅ yahi sahi import
+import "dotenv/config";
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const prisma = new PrismaClient();
 
-module.exports = prisma;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // ssl: true
+
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter
+});
+export { prisma }
