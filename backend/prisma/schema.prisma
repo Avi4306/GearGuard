@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  user
+  technician
+  manager
+  admin
+}
+
+enum RequestType {
+  corrective
+  preventive
+}
+
+enum RequestStatus {
+  new
+  in_progress
+  repaired
+  scrap
+}
+
+enum EquipmentStatus {
+  active
+  scrapped
+}
+
+model User {
+  id    Int    @id @default(autoincrement())
+  name  String
+  email String @unique
+  role  Role
+
+  assignedRequests MaintenanceRequest[] @relation("AssignedRequests")
+
+  createdAt   DateTime     @default(now())
+  teamMembers TeamMember[]
+}
+
+model MaintenanceTeam {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  members   TeamMember[]
+  equipment Equipment[]
+}
+
+model TeamMember {
+  id     Int @id @default(autoincrement())
+  userId Int
+  teamId Int
+
+  user User            @relation(fields: [userId], references: [id])
+  team MaintenanceTeam @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])
+}
+
+model Equipment {
+  id           Int             @id @default(autoincrement())
+  name         String
+  serialNumber String          @unique
+  location     String
+  status       EquipmentStatus @default(active)
+
+  maintenanceTeamId Int
+  maintenanceTeam   MaintenanceTeam @relation(fields: [maintenanceTeamId], references: [id])
+
+  requests MaintenanceRequest[]
+}
+
+model MaintenanceRequest {
+  id      Int           @id @default(autoincrement())
+  subject String
+  type    RequestType
+  status  RequestStatus @default(new)
+
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+
+  technicianId Int?
+  technician   User? @relation(name: "AssignedRequests", fields: [technicianId], references: [id])
+
+  scheduledAt DateTime?
+  duration    Float?
+
+  createdAt DateTime @default(now())
+}
