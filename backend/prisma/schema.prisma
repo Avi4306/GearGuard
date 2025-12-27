@@ -13,7 +13,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -77,6 +76,11 @@ model Equipment {
   serialNumber String          @unique
   location     String
   status       EquipmentStatus @default(active)
+
+    purchaseDate   DateTime?
+  warrantyEnd    DateTime?       // For "Warranty Information"
+  department     String?         // E.g., "Production"
+  assignedTo     String?   
 
   maintenanceTeamId Int
   maintenanceTeam   MaintenanceTeam @relation(fields: [maintenanceTeamId], references: [id])
