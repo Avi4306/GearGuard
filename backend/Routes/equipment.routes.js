@@ -1,10 +1,19 @@
 const express = require('express');
-const Eqrouter = express.Router();
-const equipmentController = require('../Contollers/equipment.controller');
+const router = express.Router();
+const {
+  createEquipment,
+  getAllEquipment,
+  getEquipmentById,
+  updateEquipment,
+  deleteEquipment,
+  getEquipmentStats,
+} = require('../Contollers/equipment.controller');
 
-Eqrouter.post('/', equipmentController.createEquipment);
-Eqrouter.get('/', equipmentController.getAllEquipment);
+router.post('/equipment', createEquipment);
+router.get('/equipment', getAllEquipment);
+router.get('/equipment/:id', getEquipmentById);
+router.put('/equipment/:id', updateEquipment);
+router.delete('/equipment/:id', deleteEquipment);
+router.get('/equipment/:id/maintenance-stats', getEquipmentStats);
 
-// Smart Button Route
-Eqrouter.get('/:id/maintenance-stats', equipmentController.getEquipmentStats);
-module.exports = Eqrouter;
+module.exports = router;

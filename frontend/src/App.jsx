@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wrench, Calendar, Settings, Users, BarChart3 } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
 import Sidebar from './components/common/Sidebar';
 import Navbar from './components/common/Navbar';
 import KanbanBoard from './components/requests/KanbanBoard';
@@ -10,31 +11,21 @@ import CalendarView from './components/calendar/CalendarView';
 import TeamList from './components/teams/TeamList';
 import Dashboard from './components/dashboard/Dashboard';
 import { useAuth } from './context/AuthContext';
-
-// Mock Data
-const mockData = {
-  equipment: [
-    { id: 1, name: 'CNC Machine 01', serialNumber: 'CNC-2024-001', department: 'Production', assignedTo: 'John Doe', team: 'Mechanics', location: 'Factory Floor A', purchaseDate: '2023-01-15', warranty: '2025-01-15', category: 'Machinery' },
-    { id: 2, name: 'Laptop Dell XPS', serialNumber: 'LT-2024-045', department: 'IT', assignedTo: 'Jane Smith', team: 'IT Support', location: 'Office 3rd Floor', purchaseDate: '2023-06-20', warranty: '2026-06-20', category: 'Computer' },
-    { id: 3, name: 'Forklift Toyota', serialNumber: 'FK-2023-012', department: 'Warehouse', assignedTo: 'Mike Johnson', team: 'Mechanics', location: 'Warehouse B', purchaseDate: '2022-11-10', warranty: '2024-11-10', category: 'Vehicle' }
-  ],
-  requests: [
-    { id: 1, subject: 'Leaking Oil', equipmentId: 1, equipmentName: 'CNC Machine 01', type: 'Corrective', stage: 'New', scheduledDate: '2024-12-20', duration: null, assignedTo: null, teamId: 1, team: 'Mechanics' },
-    { id: 2, subject: 'Routine Checkup', equipmentId: 2, equipmentName: 'Laptop Dell XPS', type: 'Preventive', stage: 'In Progress', scheduledDate: '2024-12-28', duration: 1, assignedTo: 'Jane Smith', teamId: 2, team: 'IT Support' },
-    { id: 3, subject: 'Battery Replacement', equipmentId: 3, equipmentName: 'Forklift Toyota', type: 'Corrective', stage: 'Repaired', scheduledDate: '2024-12-15', duration: 3, assignedTo: 'Mike Johnson', teamId: 1, team: 'Mechanics' }
-  ],
-  teams: [
-    { id: 1, name: 'Mechanics', members: ['John Doe', 'Mike Johnson'] },
-    { id: 2, name: 'IT Support', members: ['Jane Smith', 'Bob Wilson'] },
-    { id: 3, name: 'Electricians', members: ['Tom Brown'] }
-  ]
-};
+import { fetchEquipment, createEquipment, updateEquipment, deleteEquipment } from './actions/equipmentActions';
+import { fetchRequests, createRequest, updateRequest, updateRequestStage, deleteRequest, assignTechnician } from './actions/requestActions';
+import { fetchTeams, createTeam, updateTeam, deleteTeam } from './actions/teamActions';
 
 function App() {
+  const dispatch = useDispatch();
+  const { logout } = useAuth();
+
+  // Redux state
+  const { equipment, loading: equipmentLoading } = useSelector(state => state.equipment);
+  const { requests, loading: requestsLoading } = useSelector(state => state.requests);
+  const { teams, loading: teamsLoading } = useSelector(state => state.teams);
+
+  // Local state
   const [currentPage, setCurrentPage] = useState('kanban');
-  const [equipment, setEquipment] = useState(mockData.equipment);
-  const [requests, setRequests] = useState(mockData.requests);
-  const [teams, setTeams] = useState(mockData.teams);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showEquipmentForm, setShowEquipmentForm] = useState(false);
@@ -42,7 +33,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [draggedRequest, setDraggedRequest] = useState(null);
 
-  const stages = ['New', 'In Progress', 'Repaired', 'Scrap'];
+  const stages = ['new', 'in_progress', 'repaired', 'scrap'];
 
   const navigation = [
     { id: 'kanban', name: 'Requests', icon: Wrench },
@@ -52,15 +43,26 @@ function App() {
     { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
   ];
 
+  // Fetch data on mount
+  useEffect(() => {
+    dispatch(fetchEquipment());
+    dispatch(fetchRequests());
+    dispatch(fetchTeams());
+  }, [dispatch]);
+
   // Request Handlers
-  const handleSaveRequest = (requestData) => {
-    if (requestData.id && requests.find(r => r.id === requestData.id)) {
-      setRequests(requests.map(r => r.id === requestData.id ? requestData : r));
-    } else {
-      setRequests([...requests, requestData]);
+  const handleSaveRequest = async (requestData) => {
+    try {
+      if (requestData.id) {
+        await dispatch(updateRequest(requestData.id, requestData));
+      } else {
+        await dispatch(createRequest(requestData));
+      }
+      setShowRequestForm(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      console.error('Error saving request:', error);
     }
-    setShowRequestForm(false);
-    setSelectedRequest(null);
   };
 
   const handleCreateRequest = () => {
@@ -74,14 +76,18 @@ function App() {
   };
 
   // Equipment Handlers
-  const handleSaveEquipment = (equipmentData) => {
-    if (equipmentData.id && equipment.find(e => e.id === equipmentData.id)) {
-      setEquipment(equipment.map(e => e.id === equipmentData.id ? equipmentData : e));
-    } else {
-      setEquipment([...equipment, equipmentData]);
+  const handleSaveEquipment = async (equipmentData) => {
+    try {
+      if (equipmentData.id) {
+        await dispatch(updateEquipment(equipmentData.id, equipmentData));
+      } else {
+        await dispatch(createEquipment(equipmentData));
+      }
+      setShowEquipmentForm(false);
+      setSelectedEquipment(null);
+    } catch (error) {
+      console.error('Error saving equipment:', error);
     }
-    setShowEquipmentForm(false);
-    setSelectedEquipment(null);
   };
 
   const handleCreateEquipment = () => {
@@ -104,12 +110,14 @@ function App() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e, stage) => {
+  const handleDrop = async (e, stage) => {
     e.preventDefault();
-    if (draggedRequest && draggedRequest.stage !== stage) {
-      setRequests(requests.map(r => 
-        r.id === draggedRequest.id ? { ...r, stage } : r
-      ));
+    if (draggedRequest && draggedRequest.status !== stage) {
+      try {
+        await dispatch(updateRequestStage(draggedRequest.id, stage));
+      } catch (error) {
+        console.error('Error updating stage:', error);
+      }
     }
     setDraggedRequest(null);
   };
@@ -120,21 +128,25 @@ function App() {
 
   // Utility Functions
   const getRequestsByStage = (stage) => {
-    return requests.filter(r => r.stage === stage);
+    return requests.filter(r => r.status === stage);
   };
 
   const getStageColor = (stage) => {
     const colors = {
-      'New': 'bg-blue-100 border-blue-300',
-      'In Progress': 'bg-yellow-100 border-yellow-300',
-      'Repaired': 'bg-green-100 border-green-300',
-      'Scrap': 'bg-red-100 border-red-300',
+      'new': 'bg-blue-100 border-blue-300',
+      'in_progress': 'bg-yellow-100 border-yellow-300',
+      'repaired': 'bg-green-100 border-green-300',
+      'scrap': 'bg-red-100 border-red-300',
     };
     return colors[stage] || 'bg-gray-100 border-gray-300';
   };
 
   // Render Page Content
   const renderPage = () => {
+    if (equipmentLoading || requestsLoading || teamsLoading) {
+      return <div className="p-6 text-center">Loading...</div>;
+    }
+
     switch (currentPage) {
       case 'kanban':
         return (
@@ -193,7 +205,7 @@ function App() {
         );
     }
   };
-  const { logout } = useAuth();
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}

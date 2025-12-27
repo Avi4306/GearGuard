@@ -1,61 +1,141 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+const prisma = require('../config/prismaclient');
 
-// --- 4. Assignment Endpoint ---
-// PATCH /api/requests/:id/assign
-export const assignRequest = async (req, res) => {
-  const { id } = req.params;
-  const { technicianId } = req.body; // Sent by the manager or tech
+// CREATE Request
+const createRequest = async (req, res) => {
+  const { subject, type, equipmentId, technicianId, scheduledAt, duration } = req.body;
 
   try {
-    const updatedRequest = await prisma.maintenanceRequest.update({
-      where: { id: parseInt(id) },
+    const request = await prisma.maintenanceRequest.create({
       data: {
-        technicianId: technicianId,
-        // Optional: you might want to set status to 'new' or keep as is
+        subject,
+        type,
+        equipmentId: Number(equipmentId),
+        technicianId: technicianId ? Number(technicianId) : null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        duration: duration ? Number(duration) : null,
       },
+      include: { equipment: true, technician: true },
     });
-    res.json(updatedRequest);
-  } catch (error) {
-    res.status(400).json({ error: "Failed to assign technician" });
+    res.status(201).json({ message: 'Request created', data: request });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ error: err.message });
   }
 };
 
-// --- 5. Execution Endpoint ---
-// PATCH /api/requests/:id/start
-export const startExecution = async (req, res) => {
-  const { id } = req.params;
-
+// READ all requests
+const getAllRequests = async (req, res) => {
   try {
-    const updatedRequest = await prisma.maintenanceRequest.update({
-      where: { id: parseInt(id) },
-      data: {
-        status: 'in_progress',
-        scheduledAt: new Date(), // Marks the actual start time
-      },
+    const requests = await prisma.maintenanceRequest.findMany({
+      include: { equipment: true, technician: true },
     });
-    res.json(updatedRequest);
-  } catch (error) {
-    res.status(400).json({ error: "Failed to start request" });
+    res.json(requests);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 };
 
-// --- 6. Completion Endpoint ---
-// PATCH /api/requests/:id/complete
-export const completeRequest = async (req, res) => {
-  const { id } = req.params;
-  const { duration } = req.body; // e.g., 2.5 (hours)
+// READ single request
+const getRequestById = async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const request = await prisma.maintenanceRequest.findUnique({
+      where: { id },
+      include: { equipment: true, technician: true },
+    });
+    if (!request) return res.status(404).json({ message: 'Request not found' });
+    res.json(request);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// UPDATE request
+const updateRequest = async (req, res) => {
+  const id = Number(req.params.id);
+  const { subject, type, equipmentId, technicianId, scheduledAt, duration, status } = req.body;
 
   try {
-    const updatedRequest = await prisma.maintenanceRequest.update({
-      where: { id: parseInt(id) },
+    const request = await prisma.maintenanceRequest.update({
+      where: { id },
       data: {
-        status: 'repaired',
-        duration: parseFloat(duration),
+        subject,
+        type,
+        equipmentId: equipmentId ? Number(equipmentId) : undefined,
+        technicianId: technicianId ? Number(technicianId) : null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+        duration: duration ? Number(duration) : undefined,
+        status,
       },
+      include: { equipment: true, technician: true },
     });
-    res.json(updatedRequest);
-  } catch (error) {
-    res.status(400).json({ error: "Failed to complete request" });
+    res.json({ message: 'Request updated', data: request });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') return res.status(404).json({ message: 'Request not found' });
+    res.status(400).json({ error: err.message });
   }
+};
+
+// UPDATE request stage (status)
+const updateStage = async (req, res) => {
+  const id = Number(req.params.id);
+  const { stage } = req.body;
+
+  try {
+    const request = await prisma.maintenanceRequest.update({
+      where: { id },
+      data: { status: stage },
+      include: { equipment: true, technician: true },
+    });
+    res.json({ message: 'Stage updated', data: request });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') return res.status(404).json({ message: 'Request not found' });
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// ASSIGN technician
+const assignTechnician = async (req, res) => {
+  const id = Number(req.params.id);
+  const { technicianId } = req.body;
+
+  try {
+    const request = await prisma.maintenanceRequest.update({
+      where: { id },
+      data: { technicianId: Number(technicianId) },
+      include: { equipment: true, technician: true },
+    });
+    res.json({ message: 'Technician assigned', data: request });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') return res.status(404).json({ message: 'Request not found' });
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// DELETE request
+const deleteRequest = async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    await prisma.maintenanceRequest.delete({ where: { id } });
+    res.json({ message: 'Request deleted' });
+  } catch (err) {
+    console.error(err);
+    if (err.code === 'P2025') return res.status(404).json({ message: 'Request not found' });
+    res.status(500).json({ error: err.message });
+  }
+};
+
+module.exports = {
+  createRequest,
+  getAllRequests,
+  getRequestById,
+  updateRequest,
+  updateStage,
+  assignTechnician,
+  deleteRequest,
 };
